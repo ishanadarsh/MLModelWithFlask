@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <script src="~\jquery-1.10.2.js"></script>
+</head>
+<body>
+
+     <div class="jumbotron">
+       <h2>Mercer HR System</h2>
+       <p class="lead">Job Library Code Prediction System</p>        
+    </div>
+    <table style="width: 100%; height: 100%;" class="form-group">
+        <tr>
+            <td>
+                <table>
+                     <tr>
+                        <td>Select Model</td>
+                        <td>
+                           <select id="model" class="form-control">
+                           </select>
+                    </tr>
+                    <tr>
+                        <td>Location City</td>
+                        <td>
+                            <input type="text" id="Location_City" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Median Annual Salary</td>
+                        <td>
+                            <input type="text" id="Median_Annual_Salary" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Career Level</td>
+                        <td>
+                            <input type="text" id="Career_Level" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Organization Name</td>
+                        <td>
+                            <input type="text" id="Organization_Name" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Organization Job Code</td>
+                        <td>
+                            <input type="text" id="Organization_Job_Code" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Expertise Score</td>
+                        <td>
+                            <input type="text" id="Expertise_Score" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Judgement Score</td>
+                        <td>
+                            <input type="text" id="Judgement_Score" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Accountability Score</td>
+                        <td>
+                            <input type="text" id="Accountability_Score" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Organization Supervisor Title Code</td>
+                        <td>
+                            <input type="text" id="Organization_Supervisor_Title_Code" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td>Average Work Experience</td>
+                        <td>
+                            <input type="text" id="Average_Work_Experience" class="form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <input type="button" id="Search" value="Predict Job Category &raquo;" class="btn btn-primary btn-lg" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Mercer Job Library Code 
+                        </td>
+                        <td>
+                            <input type="text" id="result" class="form-control" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style ="vertical-align:top;width:30%">
+                
+                <div id="divPridictionTable"></div></td>
+            <td style="vertical-align:top;width:28%">Output :             
+                <textarea id="output" style="height: 50%; width: 80%" class="form-control"></textarea></td>
+        </tr>
+    </table>
+    
+
+    
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#Search').click(function () {
+                var person = '{ "Location_City": "' + $("#Location_City").val() + '",';
+                person += '"Median_Annual_Salary": "' + $("#Median_Annual_Salary").val() + '",';
+                person += '"Career_Level": "' + $("#Career_Level").val() + '",';
+                person += '"Organization_Name": "' + $("#Organization_Name").val() + '",';
+                person += '"Organization_Job_Code": "' + $("#Organization_Job_Code").val() + '",';
+                person += '"Expertise_Score": "' + $("#Expertise_Score").val() + '",';
+                person += '"Judgement_Score": "' + $("#Judgement_Score").val() + '",';
+                person += '"Accountability_Score": "' + $("#Accountability_Score").val() + '",';
+                person += '"Organization_Supervisor_Title_Code": "' + $("#Organization_Supervisor_Title_Code").val() + '",';
+                person += '"Average_Work_Experience": "' + $("#Average_Work_Experience").val() + '",';
+                person += '"Model": "' + $( "#model option:selected" ).val() + '"}';
+
+                $.ajax({
+                    url: 'http://127.0.0.1:5000/api/v1/resources/predict',
+                    type: 'POST',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: person,
+                    success: function (response) {   
+                        var data = JSON.parse(response);
+                        $('#result').val(data["Mercer_Job_Library_Code"]);
+                        var pretty = JSON.stringify(response, undefined, 2);
+                        $('#output').val(pretty);
+                        showProbilityScore(data["Predictions_Percentage"])
+                        
+
+                        console.log(data["Mercer_Job_Library_Code"]);
+                        console.log(data["Predictions_Percentage"]);
+                        console.log(person);
+                    },
+                    error: function (response) {
+                        alert("Error. Please try again later !!!");
+                        console.log(response);
+                        console.log(person);
+                    }
+                });
+
+                
+
+                function showProbilityScore(data) {                   
+                    var strHTML = 'Pridiction Score:<br />';                   
+                    strHTML += "<tr><th>Job Library Code</th><th>Prediction(%)</th></tr>"
+                    $.each(data, function (key, val) {
+                        strHTML += "<tr><td>" + key + "</td><td>" + val + "</td></tr>"
+                    });
+                    strHTML = "<table class='table table-bordered'>" + strHTML + "</table>"                    
+                    $('#divPridictionTable').html(strHTML);
+                }
+
+            });
+
+
+            
+             $.ajax({
+                    url: 'http://127.0.0.1:5000/api/v1/resources/getModels',
+                    type: 'POST',                    
+                    contentType: "application/json; charset=utf-8",                                    
+                    success: function (response) {   
+                        var data = JSON.parse(response);                     
+                        $.each(data, function (index, value) {
+                        // APPEND OR INSERT DATA TO SELECT ELEMENT.
+                        $('#model').append('<option value="' + value + '">' + index + '</option>');
+                });
+                        console.log(response);                        
+                    },
+                    error: function (response) {
+                        alert("Error. Please try again later !!!");
+                        console.log(response);                      
+                    }
+                });
+
+        });
+
+    </script>
+    <style>
+    td,
+    th {
+      padding: 5px;
+    }
+    </style>
+</body>
+</html>
